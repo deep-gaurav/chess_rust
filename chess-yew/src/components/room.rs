@@ -14,6 +14,8 @@ pub struct Room {
     lobby: Lobby,
     selfid: String,
 
+    teammode: TeamMode,
+
     gamestartcb: Callback<Lobby>,
 }
 
@@ -22,6 +24,8 @@ pub enum Msg {
     Refresh(Lobby),
     StartGame,
     GameStarted(State),
+
+    ChangeTeamMode(TeamMode),
 
     PlayerJoined(Player),
     PlayerDisconnected(Player),
@@ -61,6 +65,7 @@ impl Component for Room {
             lobby: _props.lobby,
             link: _link,
             selfid: _props.selfid,
+            teammode: TeamMode::Solo,
             gamestartcb: _props.gamestartcb,
         }
     }
@@ -72,11 +77,21 @@ impl Component for Room {
                 self.lobby = lobby;
                 true
             }
+            Msg::ChangeTeamMode(mode) => {
+                self.teammode = mode;
+                true
+            }
             Msg::StartGame => {
                 self._socket_agent
                     .send(AgentInput::Send(PlayerMessage::StartGame(
-                        GameType::TwoPlayer,
-                        TeamMode::Solo,
+                        {
+                            if self.lobby.players.len() == 4 {
+                                GameType::FourPlayer
+                            } else {
+                                GameType::TwoPlayer
+                            }
+                        },
+                        self.teammode,
                     )));
                 false
             }
@@ -111,6 +126,7 @@ impl Component for Room {
 
     fn view(&self) -> Html {
         let state = self.lobby.state.clone();
+        let canstart = self.lobby.players.len() == 4 || self.lobby.players.len() == 2;
         html! {
             <>
                 <div class="section">
@@ -130,10 +146,57 @@ impl Component for Room {
                 }
                 </div>
                 {
+                    if self.lobby.players.len()>2{
+                        html!{
+                <div class="level is-mobile">
+                    <div class="level-item">
+                        <div class="tabs is-toggle is-toggle-rounded">
+                            <ul>
+                                <li class= {
+                                    if self.teammode!=TeamMode::Solo{
+                                        ""
+                                    }else{
+                                        "is-active"
+                                    }
+                                }>
+                                    <a
+                                        onclick=self.link.callback(|_|Msg::ChangeTeamMode(TeamMode::Solo))
+                                    >
+                                        <span class="icon">
+                                            {"Solo"}
+                                        </span>
+                                    </a>
+                                </li>
+                                <li class= {
+                                    if self.teammode==TeamMode::Solo{
+                                        ""
+                                    }else{
+                                        "is-active"
+                                    }
+                                }>
+                                    <a class="level-item"
+                                        onclick=self.link.callback(|_|Msg::ChangeTeamMode(TeamMode::Team))
+                                    >
+                                        <span class="icon">
+                                            {"Team"}
+                                        </span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                        }
+                    }else{
+                        html!{}
+                    }
+                }
+                {
                     if self.selfid==self.lobby.state.leader(){
                         html!{
                             <div class="container has-text-centered">
-                                <button class="button is-primary" onclick=self.link.callback(
+                                <button disabled={!canstart} class="button is-primary" onclick=self.link.callback(
                                     |_|Msg::StartGame
                                 )>{"Start"}</button>
                             </div>
