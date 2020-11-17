@@ -9,7 +9,7 @@ use chess_rust::Color;
 use wasm_bindgen::*;
 
 lazy_static! {
-    static ref SIGNAL_URL: String = String::from("ws://localhost:3012");
+    static ref SIGNAL_URL: String = String::from("wss://chess-webserver.herokuapp.com");
 }
 
 pub struct Home {
