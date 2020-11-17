@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "chess-rust"
+		},
+		{
+			"path": "chess-server"
+		},
+		{
+			"path": "chess-yew"
+		}
+	]
+}
