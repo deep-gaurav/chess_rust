@@ -144,7 +144,9 @@ impl Lobby {
                     self.state = State::Game({
                         match game_type {
                             GameType::TwoPlayer => Board::init_2p(),
-                            GameType::FourPlayer => Board::init_4p(team_mode),
+                            GameType::FourPlayer | GameType::ThreePlayer => {
+                                Board::init_4p(team_mode)
+                            }
                         }
                     });
                     self.broadcast(SocketMessage::GameStart(self.state.clone()));

@@ -72,6 +72,9 @@ impl Component for ChessBoard {
     fn change(&mut self, _props: Self::Properties) -> ShouldRender {
         if self.board != _props.board {
             self.board = _props.board;
+            self.highlighted_positions.clear();
+            self.available_moves.clear();
+
             true
         } else {
             false

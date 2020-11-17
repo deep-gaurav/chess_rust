@@ -13,6 +13,7 @@ pub struct Board {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub enum GameType {
     TwoPlayer,
+    ThreePlayer,
     FourPlayer,
 }
 
@@ -191,8 +192,8 @@ impl Board {
         }
     }
 
-    pub fn is_checkmate(&self) -> bool {
-        if self.is_check(self.turn) && self.get_all_legal_moves().is_empty() {
+    pub fn is_checkmate(&self, color: Color) -> bool {
+        if self.is_check(color) && self.get_all_legal_moves(color).is_empty() {
             true
         } else {
             false
@@ -235,14 +236,59 @@ impl Board {
         }
     }
 
+    pub fn is_game_over(&self) -> bool {
+        match self.game_type {
+            GameType::TwoPlayer => {
+                self.is_checkmate(Color::Black) || self.is_checkmate(Color::White)
+            }
+            GameType::ThreePlayer => {
+                let mut mates = 0;
+                for color in [Color::White, Color::Black, Color::Red].iter() {
+                    if self.is_checkmate(color.clone()) {
+                        mates += 1;
+                    }
+                }
+                if mates >= 2 {
+                    true
+                } else {
+                    false
+                }
+            }
+            GameType::FourPlayer => {
+                let mut mates = 0;
+                for color in [Color::White, Color::Black, Color::Red, Color::Blue].iter() {
+                    if self.is_checkmate(color.clone()) {
+                        mates += 1;
+                    }
+                }
+                match self.team_mode {
+                    TeamMode::Team => {
+                        if mates >= 1 {
+                            true
+                        } else {
+                            false
+                        }
+                    }
+                    TeamMode::Solo => {
+                        if mates >= 3 {
+                            true
+                        } else {
+                            false
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     pub fn change_turn(&mut self) {
         self.turn = match self.turn {
             Color::White => match self.game_type {
                 GameType::TwoPlayer => Color::Black,
-                GameType::FourPlayer => Color::Red,
+                GameType::FourPlayer | GameType::ThreePlayer => Color::Red,
             },
             Color::Black => match self.game_type {
-                GameType::TwoPlayer => Color::White,
+                GameType::TwoPlayer | GameType::ThreePlayer => Color::White,
                 GameType::FourPlayer => Color::Blue,
             },
             Color::Red => Color::Black,
@@ -295,7 +341,7 @@ impl Board {
         }
     }
 
-    pub fn get_all_legal_moves(&self) -> Vec<Move> {
+    pub fn get_all_legal_moves(&self, color: Color) -> Vec<Move> {
         let self_pieces = self
             .positions
             .iter()

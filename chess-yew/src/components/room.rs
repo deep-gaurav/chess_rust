@@ -87,6 +87,8 @@ impl Component for Room {
                         {
                             if self.lobby.players.len() == 4 {
                                 GameType::FourPlayer
+                            } else if self.lobby.players.len() == 3 {
+                                GameType::ThreePlayer
                             } else {
                                 GameType::TwoPlayer
                             }
@@ -126,7 +128,9 @@ impl Component for Room {
 
     fn view(&self) -> Html {
         let state = self.lobby.state.clone();
-        let canstart = self.lobby.players.len() == 4 || self.lobby.players.len() == 2;
+        let canstart = self.lobby.players.len() == 4
+            || self.lobby.players.len() == 2
+            || self.lobby.players.len() == 3;
         html! {
             <>
                 <div class="section">
