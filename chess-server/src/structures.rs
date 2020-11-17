@@ -145,7 +145,7 @@ impl Lobby {
                         match game_type {
                             GameType::TwoPlayer => Board::init_2p(),
                             GameType::FourPlayer | GameType::ThreePlayer => {
-                                Board::init_4p(team_mode)
+                                Board::init_4p(team_mode, game_type)
                             }
                         }
                     });

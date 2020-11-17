@@ -75,7 +75,7 @@ impl Board {
         }
     }
 
-    pub fn init_4p(team_mode: TeamMode) -> Self {
+    pub fn init_4p(team_mode: TeamMode, game_type: GameType) -> Self {
         let mut positions = HashMap::new();
         for i in 0..14 {
             for j in 0..14 {
@@ -118,6 +118,9 @@ impl Board {
                 } else if i == 0 || i == 13 {
                     let color = {
                         if i == 0 {
+                            if game_type == GameType::ThreePlayer {
+                                continue;
+                            }
                             Color::Blue
                         } else {
                             Color::Red
@@ -132,6 +135,9 @@ impl Board {
                         _ => piece = None,
                     }
                 } else if i == 1 {
+                    if game_type == GameType::ThreePlayer {
+                        continue;
+                    }
                     piece = Some(Piece::Pawn(Color::Blue));
                 } else if 13 - i == 1 {
                     piece = Some(Piece::Pawn(Color::Red));
@@ -148,7 +154,7 @@ impl Board {
             turn: Color::White,
             width: 14,
             team_mode: team_mode,
-            game_type: GameType::FourPlayer,
+            game_type,
         }
     }
 
