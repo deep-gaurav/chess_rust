@@ -299,6 +299,9 @@ impl Board {
             },
             Color::Red => Color::Black,
             Color::Blue => Color::White,
+        };
+        if !self.is_game_over() && self.is_checkmate(self.turn) {
+            self.change_turn();
         }
     }
 
