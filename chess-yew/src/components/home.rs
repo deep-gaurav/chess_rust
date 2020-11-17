@@ -140,7 +140,7 @@ impl Component for Home {
             <section class="section">
                 <div class="container">
                     <h1 class="title has-text-centered">
-                        {"Pictionary"}
+                        {"Chess"}
                     </h1>
                 </div>
 
