@@ -114,6 +114,7 @@ impl ToColor for Color {
             Color::Black => "black".into(),
             Color::Red => "red".into(),
             Color::Blue => "blue".into(),
+            Color::Gray(_) => "gray".into(),
         }
     }
 }

@@ -32,15 +32,15 @@ impl Lobby {
         for color in [Color::White, Color::Black, Color::Red, Color::Blue].into_iter() {
             let mut taken = false;
             for p in self.players.values() {
-                if let PlayerStatus::JoinedLobby(_, c) = p.status {
-                    if c == *color {
+                if let PlayerStatus::JoinedLobby(_, c) = &p.status {
+                    if c == color {
                         taken = true;
                         break;
                     }
                 }
             }
             if !taken {
-                return Some(*color);
+                return Some(color.clone());
             }
         }
         None
@@ -77,8 +77,8 @@ impl Lobby {
     }
 
     pub fn add_player(&mut self, player: Player) -> Self {
-        if let PlayerStatus::JoinedLobby(_, color) = player.status {
-            self.broadcast(SocketMessage::PlayerJoined(player.clone(), color));
+        if let PlayerStatus::JoinedLobby(_, color) = &player.status {
+            self.broadcast(SocketMessage::PlayerJoined(player.clone(), color.clone()));
         }
         if let Some(oldplayer) = self.players.insert(player.id.clone(), player.clone()) {
             log::warn!("Old player {:#?} replaced by {:#?}", oldplayer, player);

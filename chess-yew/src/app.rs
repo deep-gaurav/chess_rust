@@ -89,8 +89,8 @@ impl Component for App {
                 true
             }
             Msg::GameStart(lob) => {
-                if let Some((_, color)) = self.lobby {
-                    self.lobby = Some((lob, color));
+                if let Some((_, color)) = &self.lobby {
+                    self.lobby = Some((lob, color.clone()));
                 }
                 true
             }

@@ -113,9 +113,9 @@ impl ChessBoard {
         let piece = piece.clone();
         let is_highlight = self.highlighted_positions.contains(&position);
         let is_check = {
-            if let Some(piece) = piece {
+            if let Some(ref piece) = piece {
                 if let Piece::King(color) = piece {
-                    if self.board.is_check(color) {
+                    if self.board.is_check(&color) {
                         true
                     } else {
                         false
@@ -185,6 +185,7 @@ impl GetRotation for Color {
             Color::Black => 0,
             Color::Red => 90,
             Color::Blue => 270,
+            Color::Gray(c) => c.get_rotation(),
         }
     }
 }

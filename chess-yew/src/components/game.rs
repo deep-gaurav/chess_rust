@@ -95,7 +95,7 @@ impl Component for Game {
         let state = self.lobby.state.clone();
         let color = {
             let selfp = &self.lobby.players[&self.selfid];
-            if let PlayerStatus::JoinedLobby(_, color) = selfp.status {
+            if let PlayerStatus::JoinedLobby(_, color) = &selfp.status {
                 color.clone()
             } else {
                 chess_rust::Color::White

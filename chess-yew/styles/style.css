@@ -91,3 +91,7 @@ html,body {
 .piece-blue {
     fill: rgb(0, 0, 184);
 }
+
+.piece-gray {
+    fill: grey;
+}

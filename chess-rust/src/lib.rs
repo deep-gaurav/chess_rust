@@ -168,9 +168,9 @@ impl Board {
 }
 
 impl Board {
-    pub fn is_check(&self, color: Color) -> bool {
+    pub fn is_check(&self, color: &Color) -> bool {
         let king_position = self.positions.iter().find_map(|(k, v)| {
-            if v == &Some(Piece::King(color)) {
+            if v == &Some(Piece::King(color.clone())) {
                 Some(k)
             } else {
                 None
@@ -198,7 +198,7 @@ impl Board {
         }
     }
 
-    pub fn is_checkmate(&self, color: Color) -> bool {
+    pub fn is_checkmate(&self, color: &Color) -> bool {
         if self.is_check(color) && self.get_all_legal_moves(color).is_empty() {
             true
         } else {
@@ -208,7 +208,13 @@ impl Board {
 
     pub fn is_position_capturable(&self, position: &Position, color: &Color) -> bool {
         if let Some(piece) = (|| Some(self.positions.get(position)?.clone()?))() {
-            piece.get_color().is_opponent(color, &self.team_mode)
+            if let Color::Gray(_) = piece.get_color() {
+                true
+            } else if piece.get_color().is_opponent(color, &self.team_mode) {
+                true
+            } else {
+                false
+            }
         } else {
             false
         }
@@ -245,12 +251,12 @@ impl Board {
     pub fn is_game_over(&self) -> bool {
         match self.game_type {
             GameType::TwoPlayer => {
-                self.is_checkmate(Color::Black) || self.is_checkmate(Color::White)
+                self.is_checkmate(&Color::Black) || self.is_checkmate(&Color::White)
             }
             GameType::ThreePlayer => {
                 let mut mates = 0;
                 for color in [Color::White, Color::Black, Color::Red].iter() {
-                    if self.is_checkmate(color.clone()) {
+                    if self.is_checkmate(color) {
                         mates += 1;
                     }
                 }
@@ -263,7 +269,7 @@ impl Board {
             GameType::FourPlayer => {
                 let mut mates = 0;
                 for color in [Color::White, Color::Black, Color::Red, Color::Blue].iter() {
-                    if self.is_checkmate(color.clone()) {
+                    if self.is_checkmate(color) {
                         mates += 1;
                     }
                 }
@@ -287,8 +293,25 @@ impl Board {
         }
     }
 
+    pub fn gray_color(&mut self, color: &Color) {
+        for piece in self.positions.values_mut() {
+            if let Some(piece) = piece {
+                if &piece.get_color() == color {
+                    *piece = match piece {
+                        Piece::Pawn(_) => Piece::Pawn(Color::Gray(Box::new(color.clone()))),
+                        Piece::Knight(_) => Piece::Knight(Color::Gray(Box::new(color.clone()))),
+                        Piece::Bishop(_) => Piece::Bishop(Color::Gray(Box::new(color.clone()))),
+                        Piece::Rook(_) => Piece::Rook(Color::Gray(Box::new(color.clone()))),
+                        Piece::Queen(_) => Piece::Queen(Color::Gray(Box::new(color.clone()))),
+                        Piece::King(_) => Piece::King(Color::Gray(Box::new(color.clone()))),
+                    }
+                }
+            }
+        }
+    }
+
     pub fn change_turn(&mut self) {
-        self.turn = match self.turn {
+        self.turn = match &self.turn {
             Color::White => match self.game_type {
                 GameType::TwoPlayer => Color::Black,
                 GameType::FourPlayer | GameType::ThreePlayer => Color::Red,
@@ -299,16 +322,18 @@ impl Board {
             },
             Color::Red => Color::Black,
             Color::Blue => Color::White,
+            Color::Gray(c) => *c.clone(),
         };
-        if !self.is_game_over() && self.is_checkmate(self.turn) {
+        if !self.is_game_over() && self.is_checkmate(&self.turn) {
+            self.gray_color(&self.turn.clone());
             self.change_turn();
         }
     }
 
     pub fn apply_move(&mut self, mov: &Move) {
         let piece = self.positions.insert(mov.from, None);
-        if let Some(promotion) = mov.promotion {
-            self.positions.insert(mov.to, Some(promotion));
+        if let Some(promotion) = &mov.promotion {
+            self.positions.insert(mov.to, Some(promotion.clone()));
         } else if let Some(piece) = piece {
             self.positions.insert(mov.to, piece);
         }
@@ -322,7 +347,7 @@ impl Board {
             if let Some(piece) = piece {
                 let mut tmp_board = self.clone();
                 tmp_board.apply_move(mov);
-                !tmp_board.is_check(piece.get_color())
+                !tmp_board.is_check(&piece.get_color())
             } else {
                 false
             }
@@ -350,7 +375,7 @@ impl Board {
         }
     }
 
-    pub fn get_all_legal_moves(&self, color: Color) -> Vec<Move> {
+    pub fn get_all_legal_moves(&self, color: &Color) -> Vec<Move> {
         let self_pieces = self
             .positions
             .iter()
@@ -361,7 +386,7 @@ impl Board {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Serialize, Deserialize)]
 pub enum Piece {
     Pawn(Color),
     Knight(Color),
@@ -374,12 +399,12 @@ pub enum Piece {
 impl Piece {
     pub fn get_color(&self) -> Color {
         match self {
-            Piece::Pawn(color) => *color,
-            Piece::Knight(color) => *color,
-            Piece::Bishop(color) => *color,
-            Piece::Rook(color) => *color,
-            Piece::Queen(color) => *color,
-            Piece::King(color) => *color,
+            Piece::Pawn(color) => color.clone(),
+            Piece::Knight(color) => color.clone(),
+            Piece::Bishop(color) => color.clone(),
+            Piece::Rook(color) => color.clone(),
+            Piece::Queen(color) => color.clone(),
+            Piece::King(color) => color.clone(),
         }
     }
 
@@ -624,16 +649,20 @@ impl Piece {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Serialize, Deserialize)]
 pub enum Color {
     White,
     Black,
     Red,
     Blue,
+    Gray(Box<Color>), // Mated Color
 }
 
 impl Color {
     pub fn is_opponent(&self, other: &Color, mode: &TeamMode) -> bool {
+        if let Color::Gray(_) = other {
+            return false;
+        }
         match mode {
             TeamMode::Team => {
                 (self.get_pawn_direction().0 != other.get_pawn_direction().0)
@@ -648,6 +677,7 @@ impl Color {
             Color::Black => (-1, 0),
             Color::Red => (0, -1),
             Color::Blue => (0, 1),
+            Color::Gray(c) => c.get_pawn_direction(),
         }
     }
     pub fn pawn_start(&self, board: &Board) -> Position {
@@ -656,6 +686,7 @@ impl Color {
             Color::Black => ((board.width - 2) as i32, 0),
             Color::Red => (0, (board.width - 2) as i32),
             Color::Blue => (0, 1),
+            Color::Gray(c) => c.get_pawn_direction(),
         }
     }
 }

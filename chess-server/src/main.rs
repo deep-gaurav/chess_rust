@@ -163,7 +163,7 @@ async fn user_connected(websocket: WebSocket, context: Context) {
                                             if let Some(color) = lobby.get_available_color() {
                                                 player.status = PlayerStatus::JoinedLobby(
                                                     lobby.id.clone(),
-                                                    color,
+                                                    color.clone(),
                                                 );
                                                 lobby.add_player(player.clone());
                                                 info!(
@@ -230,9 +230,9 @@ async fn player_message(player_id: &str, lobbyid: &str, context: &Context, messa
                     lobby.start_game(pid, game_type, team_mode);
                 }
                 PlayerMessage::Move(mov) => {
-                    if let PlayerStatus::JoinedLobby(_, color) = player.status {
+                    if let PlayerStatus::JoinedLobby(_, color) = &player.status {
                         if let State::Game(board) = &mut lobby.state {
-                            if board.turn == color {
+                            if &board.turn == color {
                                 if board.is_move_legal(&mov) && board.is_move_correct_turn(&mov) {
                                     board.apply_move(&mov);
                                     board.change_turn();
