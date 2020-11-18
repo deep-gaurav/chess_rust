@@ -107,7 +107,7 @@ impl Component for Game {
             }
             State::Game(board) => {
                 html! {
-                    <div class="section py-2">
+                    <div class="px-1 py-2">
                     <div class="">
                         <div class="container">
                             <h1 class="title has-text-centered">
