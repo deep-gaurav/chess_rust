@@ -27,6 +27,7 @@ extern "C" {
 pub struct PeerWidget {
     _socket_agent: Box<dyn yew::Bridge<SocketAgent>>,
     state: State,
+    turn: Option<Color>,
     link: ComponentLink<Self>,
 
     peer: Player,
@@ -41,6 +42,7 @@ pub enum Msg {
 pub struct Props {
     pub peer: Player,
     pub state: State,
+    pub turn: Option<Color>,
 }
 
 impl Component for PeerWidget {
@@ -58,6 +60,7 @@ impl Component for PeerWidget {
             tippy: None,
             peer: _props.peer,
             state: _props.state,
+            turn: _props.turn,
         }
     }
 
@@ -70,6 +73,7 @@ impl Component for PeerWidget {
     fn change(&mut self, _props: Self::Properties) -> ShouldRender {
         self.state = _props.state;
         self.peer = _props.peer;
+        self.turn = _props.turn;
         true
     }
 
@@ -79,17 +83,32 @@ impl Component for PeerWidget {
         use crate::components::avatar::avatar;
         let color = {
             match &self.peer.status {
-                PlayerStatus::Initiated => "".into(),
-                PlayerStatus::JoinedLobby(_, color) => color.to_color(),
+                PlayerStatus::Initiated => &Color::White,
+                PlayerStatus::JoinedLobby(_, color) => color,
+            }
+        };
+        let border_color = {
+            if let Some(color) = &self.turn {
+                if let PlayerStatus::JoinedLobby(_, c) = &self.peer.status {
+                    if color == c {
+                        "green"
+                    } else {
+                        "black"
+                    }
+                } else {
+                    "black"
+                }
+            } else {
+                "black"
             }
         };
         html! {
             <>
                 <div class="container has-text-centered">
 
-                    <div id=&self.peer.id style=format!("display:inline-block;border-width:5px;border-style:solid;border-radius:50%;border-color:{}",color)>
+                    <div id=&self.peer.id style=format!("display:inline-block;border-width:5px;border-style:solid;border-radius:50%;border-color:{}",border_color)>
                     {
-                        avatar(&self.peer.name)
+                        avatar(&self.peer.name,color)
                     }
                     </div>
                     <div>
@@ -103,7 +122,7 @@ impl Component for PeerWidget {
     }
 }
 
-trait ToColor {
+pub trait ToColor {
     fn to_color(&self) -> String;
 }
 

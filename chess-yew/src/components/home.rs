@@ -149,7 +149,7 @@ impl Component for Home {
                 <div class="container" style="display:inline-flex;">
                 <div class="box">
                     {
-                        avatar(&self.name)
+                        avatar(&self.name, &Color::White)
                     }
 
                     <div class="container mt-2">

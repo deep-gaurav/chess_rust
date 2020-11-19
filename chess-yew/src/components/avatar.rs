@@ -1,10 +1,14 @@
+use crate::components::peer::ToColor;
+
+use chess_rust::Color;
+
 use yew::prelude::*;
 
-pub fn avatar(name: &str) -> Html {
+pub fn avatar(name: &str, color: &Color) -> Html {
     let firstchar = name.chars().next().unwrap_or('.');
     let hue = (random(firstchar as u32) * 360_f64) as u32;
     html! {
-        <div class="container" style=format!("position:relative;background-color:hsl({},100%,50%);height:50px;width:50px;border-radius:50%;",hue)>
+        <div class="container" style=format!("position:relative;background-color:{};height:50px;width:50px;border-radius:50%;",color.to_color())>
             <div style="position:absolute;width:100%;top:50%;transform: translate(0, -50%);margin: 0;" class="has-text-centered">
                 {
                     firstchar

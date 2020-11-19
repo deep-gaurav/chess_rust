@@ -144,7 +144,7 @@ impl Component for Room {
                 {
                     for self.lobby.players.iter().map(|p|html!{
                         <div class="column">
-                        <PeerWidget key=format!("{:#?}",p) state=state.clone() peer=p.1.clone()/>
+                        <PeerWidget key=format!("{:#?}",p) state=state.clone() peer=p.1.clone() turn=None/>
                         </div>
                     })
                 }

@@ -107,19 +107,17 @@ impl Component for Game {
             }
             State::Game(board) => {
                 html! {
-                    <div class="px-1 py-2">
-                    <div class="">
+                    <div class="container" style="overflow:hidden;">
                         <div class="container">
                             <h1 class="title has-text-centered">
                                 {format!("Room {}",self.lobby.id)}
                             </h1>
                         </div>
-                    </div>
                     <div class="columns  is-mobile mt-3">
                     {
                         for self.lobby.players.iter().map(|p|html!{
                             <div class="column">
-                            <PeerWidget key=format!("{:#?}",p) state=state.clone() peer=p.1.clone()/>
+                            <PeerWidget key=format!("{:#?}",p) state=state.clone() peer=p.1.clone() turn={Some(board.turn.clone())}/>
                             </div>
                         })
                     }
@@ -127,9 +125,7 @@ impl Component for Game {
 
                     <div class="columns">
                         <div class="column  is-three-quarters-widescreen">
-                            <div style="">
                                 <ChessBoard movecb=self.link.callback(|mov|Msg::PlayerMove(mov)) self_color=color board=board />
-                            </div>
                         </div>
 
                     </div>
