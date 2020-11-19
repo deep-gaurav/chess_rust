@@ -128,7 +128,7 @@ async fn user_connected(websocket: WebSocket, context: Context) {
                                         use rand::{distributions::Alphanumeric, Rng};
                                         let lobbyid: String = rand::thread_rng()
                                             .sample_iter(&Alphanumeric)
-                                            .take(10)
+                                            .take(6)
                                             .collect::<String>();
                                         let privatelobbies =
                                             &mut context.write().await.private_lobbies;

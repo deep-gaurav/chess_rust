@@ -221,7 +221,7 @@ impl CloseCodes {
     fn to_code(&self) -> u16 {
         match self {
             CloseCodes::WrongInit => 1003,
-            CloseCodes::CantCreateLobby => 1011,
+            CloseCodes::CantCreateLobby => 1013,
             CloseCodes::CantJoinLobbyDoestExist => 4001,
             CloseCodes::NewSessionOpened => 4002,
             CloseCodes::LobbyFull => 4003,
