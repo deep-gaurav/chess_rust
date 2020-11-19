@@ -184,9 +184,10 @@ impl Player {
         }
     }
     pub fn close(&self, code: CloseCodes) {
+        warn!("Closing connection to {:#?} code: {:#?}", &self, code);
         if let Err(er) = self
             .send_channel
-            .send(Ok(Message::close_with(code as u8, code.to_string())))
+            .send(Ok(Message::close_with(code.to_code(), code.to_string())))
         {
             error!(
                 "Cant send close message to player {:#?} error {:#?}",
@@ -213,6 +214,18 @@ pub enum CloseCodes {
 impl std::fmt::Display for CloseCodes {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{:?}", self)
+    }
+}
+
+impl CloseCodes {
+    fn to_code(&self) -> u16 {
+        match self {
+            CloseCodes::WrongInit => 1003,
+            CloseCodes::CantCreateLobby => 1011,
+            CloseCodes::CantLoinLobbyDoestExist => 4001,
+            CloseCodes::NewSessionOpened => 4002,
+            CloseCodes::LobbyFull => 4003,
+        }
     }
 }
 

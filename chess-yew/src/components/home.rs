@@ -36,7 +36,7 @@ extern "C" {
 
 pub enum Msg {
     Connected,
-    Disconnected,
+    Disconnected(Option<(u16, String)>),
     ErrorConnecting,
     Connect,
     Ignore,
@@ -55,10 +55,10 @@ impl Component for Home {
 
             AgentOutput::SocketMessage(msg) => match msg {
                 SocketMessage::LobbyJoined(lobby, color) => Msg::LobbyJoined(lobby, color),
-                SocketMessage::Close(_) => Msg::Disconnected,
+                SocketMessage::Close(_) => Msg::Disconnected(None),
                 _ => Msg::Ignore,
             },
-            AgentOutput::SocketDisconnected => Msg::Disconnected,
+            AgentOutput::SocketDisconnected(reason) => Msg::Disconnected(reason),
             AgentOutput::SocketErrorConnecting => Msg::ErrorConnecting,
         }));
         Home {
@@ -110,7 +110,7 @@ impl Component for Home {
                 }
                 false
             }
-            Msg::Disconnected => {
+            Msg::Disconnected(_) => {
                 self.is_connecting = false;
                 true
             }

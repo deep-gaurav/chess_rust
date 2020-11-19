@@ -22,7 +22,7 @@ pub enum AgentInput {
 pub enum AgentOutput {
     SocketMessage(SocketMessage),
     SocketConnected,
-    SocketDisconnected,
+    SocketDisconnected(Option<(u16, String)>),
     SocketErrorConnecting,
 }
 
@@ -35,7 +35,7 @@ pub struct SocketAgent {
 
 pub enum Msg {
     Connected((WebSocket, String)),
-    Disconnected,
+    Disconnected(Option<(u16, String)>),
     ErrorConnecting,
     SocketMessage(SocketMessage),
 
@@ -107,10 +107,10 @@ impl Agent for SocketAgent {
                 // self.handle_socket_msg(&msg);
                 self.broadcast(AgentOutput::SocketMessage(msg));
             }
-            Msg::Disconnected => {
+            Msg::Disconnected(code) => {
                 log::warn!("Disconnected from socket");
                 self.socket = None;
-                self.broadcast(AgentOutput::SocketDisconnected);
+                self.broadcast(AgentOutput::SocketDisconnected(code));
             }
 
             Msg::SendSocketMessage(data) => {
@@ -169,8 +169,17 @@ impl SocketAgent {
                 ws.set_onerror(Some(onerror_callback.as_ref().unchecked_ref()));
                 onerror_callback.forget();
                 let linkclone = self.link.clone();
-                let onclose_callback = Closure::wrap(Box::new(move |_| {
-                    linkclone.send_message(Msg::Disconnected);
+                let onclose_callback = Closure::wrap(Box::new(move |event: JsValue| {
+                    use web_sys::CloseEvent;
+                    let event = event.dyn_into::<CloseEvent>();
+                    if let Ok(event) = event {
+                        log::warn!("Closed code: {} reason: {}", event.code(), event.reason());
+
+                        linkclone
+                            .send_message(Msg::Disconnected(Some((event.code(), event.reason()))));
+                    } else {
+                        linkclone.send_message(Msg::Disconnected(None));
+                    }
                 }) as Box<dyn FnMut(JsValue)>);
 
                 ws.set_onclose(Some(onclose_callback.as_ref().unchecked_ref()));

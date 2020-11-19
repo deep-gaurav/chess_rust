@@ -27,7 +27,7 @@ pub enum Msg {
     LobbyJoined(String, Lobby, Color),
     GameStart(Lobby),
 
-    Disconnected,
+    Disconnected(Option<(u16, String)>),
     PlayerDisconnected(Player),
     PlayerJoined(Player),
 }
@@ -57,7 +57,7 @@ impl Component for App {
                 SocketMessage::PlayerDisconnected(p) => Msg::PlayerDisconnected(p),
                 _ => Msg::Ignore,
             },
-            AgentOutput::SocketDisconnected => Msg::Disconnected,
+            AgentOutput::SocketDisconnected(reason) => Msg::Disconnected(reason),
             _ => Msg::Ignore,
         }));
         let pinginterval = yew::services::IntervalService::spawn(
@@ -95,11 +95,20 @@ impl Component for App {
                 true
             }
 
-            Msg::Disconnected => {
+            Msg::Disconnected(reason) => {
                 self.notif_agent
                     .send(NotificationAgentInput::Notify(Notification {
                         notification_type: NotificationType::Error,
-                        content: "Disconnected from server".to_string(),
+                        content: {
+                            if let Some(reason) = reason {
+                                format!(
+                                    "Disconnected from server code: {}, reason: {}",
+                                    reason.0, reason.1
+                                )
+                            } else {
+                                "Disconnected from server".to_string()
+                            }
+                        },
                     }));
                 false
             }

@@ -39,4 +39,5 @@ features = [
   'TouchList',
   'Touch',
   'BinaryType',
+  'CloseEvent',
 ]
