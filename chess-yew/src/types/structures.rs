@@ -49,7 +49,7 @@ pub enum PlayerStatus {
 pub enum CloseCodes {
     WrongInit,
     CantCreateLobby,
-    CantLoinLobbyDoestExist,
+    CantJoinLobbyDoestExist,
     NewSessionOpened,
     LobbyFull,
 }

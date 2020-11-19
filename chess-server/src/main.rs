@@ -178,7 +178,7 @@ async fn user_connected(websocket: WebSocket, context: Context) {
                                                 player.close(CloseCodes::LobbyFull)
                                             }
                                         } else {
-                                            player.close(CloseCodes::CantLoinLobbyDoestExist)
+                                            player.close(CloseCodes::CantJoinLobbyDoestExist)
                                         }
                                     }
                                     _ => {}

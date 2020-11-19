@@ -207,7 +207,7 @@ pub enum PlayerStatus {
 pub enum CloseCodes {
     WrongInit,
     CantCreateLobby,
-    CantLoinLobbyDoestExist,
+    CantJoinLobbyDoestExist,
     NewSessionOpened,
     LobbyFull,
 }
@@ -222,7 +222,7 @@ impl CloseCodes {
         match self {
             CloseCodes::WrongInit => 1003,
             CloseCodes::CantCreateLobby => 1011,
-            CloseCodes::CantLoinLobbyDoestExist => 4001,
+            CloseCodes::CantJoinLobbyDoestExist => 4001,
             CloseCodes::NewSessionOpened => 4002,
             CloseCodes::LobbyFull => 4003,
         }
