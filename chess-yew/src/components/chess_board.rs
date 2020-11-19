@@ -16,6 +16,7 @@ pub struct Props {
     pub board: Board,
     pub self_color: Color,
     pub movecb: Callback<Move>,
+    pub last_move: Option<Move>,
 }
 
 pub enum Msg {
@@ -74,7 +75,10 @@ impl Component for ChessBoard {
             self.board = _props.board;
             self.highlighted_positions.clear();
             self.available_moves.clear();
-
+            if let Some(mov) = _props.last_move {
+                self.highlighted_positions.push(mov.from);
+                self.highlighted_positions.push(mov.to);
+            }
             true
         } else {
             false

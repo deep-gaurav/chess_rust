@@ -237,7 +237,7 @@ async fn player_message(player_id: &str, lobbyid: &str, context: &Context, messa
                                     board.apply_move(&mov);
                                     board.change_turn();
                                     let newboard = board.clone();
-                                    lobby.broadcast(SocketMessage::Moved(newboard))
+                                    lobby.broadcast(SocketMessage::Moved(newboard, mov.clone()))
                                 }
                             }
                         }

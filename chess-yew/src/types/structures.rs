@@ -77,7 +77,7 @@ pub enum SocketMessage {
     PlayerDisconnected(Player),
     Close(CloseCodes),
 
-    Moved(Board),
+    Moved(Board, Move),
 
     LeaderChange(State),
     GameStart(State),

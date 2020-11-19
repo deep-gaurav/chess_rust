@@ -14,6 +14,7 @@ use crate::types::structures::*;
 pub struct Game {
     _socket_agent: Box<dyn yew::Bridge<SocketAgent>>,
     notif_agent: Box<dyn yew::Bridge<NotificationAgent>>,
+    last_move: Option<Move>,
     lobby: Lobby,
     selfid: String,
     link: ComponentLink<Self>,
@@ -26,7 +27,7 @@ pub enum Msg {
     LeaderChange(State),
 
     PlayerMove(Move),
-    BoardUpdate(Board),
+    BoardUpdate(Board, Option<Move>),
 }
 
 #[derive(Properties, Clone, Debug)]
@@ -45,7 +46,7 @@ impl Component for Game {
                 SocketMessage::PlayerJoined(p, _) => Msg::PlayerJoin(p),
                 SocketMessage::PlayerDisconnected(p) => Msg::PlayerDisconnect(p),
                 SocketMessage::LeaderChange(leader) => Msg::LeaderChange(leader),
-                SocketMessage::Moved(board) => Msg::BoardUpdate(board),
+                SocketMessage::Moved(board, mov) => Msg::BoardUpdate(board, Some(mov)),
                 _ => Msg::Ignore,
             },
             _ => Msg::Ignore,
@@ -57,6 +58,7 @@ impl Component for Game {
             lobby: _props.lobby,
             link: _link,
             selfid: _props.selfid,
+            last_move: None,
         }
     }
 
@@ -75,8 +77,9 @@ impl Component for Game {
                 self.lobby.players.remove(&p.id);
                 true
             }
-            Msg::BoardUpdate(board) => {
+            Msg::BoardUpdate(board, mov) => {
                 self.lobby.state = State::Game(board);
+                self.last_move = mov;
                 true
             }
             Msg::PlayerMove(mov) => {
@@ -125,7 +128,7 @@ impl Component for Game {
 
                     <div class="columns">
                         <div class="column  is-three-quarters-widescreen">
-                                <ChessBoard movecb=self.link.callback(|mov|Msg::PlayerMove(mov)) self_color=color board=board />
+                                <ChessBoard last_move=self.last_move.clone() movecb=self.link.callback(|mov|Msg::PlayerMove(mov)) self_color=color board=board />
                         </div>
 
                     </div>
