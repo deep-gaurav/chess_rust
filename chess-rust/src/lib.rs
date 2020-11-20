@@ -718,6 +718,33 @@ impl Piece {
                                             })
                                         }
                                     }
+if p.1 {
+                                        let poss = self.get_color().get_castle_positions().1;
+                                        let cancastle = !poss.0.iter().any(|p| {
+                                            board.is_position_occupied(p)
+                                                || board.is_check_position(p, color)
+                                        });
+                                        if cancastle {
+                                            let mut np = position.clone();
+                                            np.0 += poss.0[1].0;
+                                            np.1 += poss.0[1].1;
+
+                                            let mut np2 = position.clone();
+                                            np2.0 += poss.0[0].0;
+                                            np2.1 += poss.0[0].1;
+                                            moves.push(Move {
+                                                from: position.clone(),
+                                                to: np,
+                                                promotion: None,
+                                                castling: Some(Box::new(Move {
+                                                    from: poss.1,
+                                                    to: np2,
+                                                    promotion: None,
+                                                    castling: None,
+                                                })),
+                                            })
+                                        }
+                                    }
                                 }
                             }
                         }
