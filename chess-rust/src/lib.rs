@@ -8,7 +8,10 @@ pub struct Board {
     pub width: u32,
     pub team_mode: TeamMode,
     pub game_type: GameType,
+    pub can_castle: HashMap<Color, CanCastle>,
 }
+
+pub type CanCastle = (bool, bool);
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub enum GameType {
@@ -30,6 +33,7 @@ pub struct Move {
     pub from: Position,
     pub to: Position,
     pub promotion: Option<Piece>,
+    pub castling: Option<Box<Move>>,
 }
 
 impl Board {
@@ -72,6 +76,14 @@ impl Board {
             width: 8,
             team_mode: TeamMode::Solo,
             game_type: GameType::TwoPlayer,
+            can_castle: {
+                let mut map = HashMap::new();
+                let colors = [Color::White, Color::Black];
+                for col in colors.iter() {
+                    map.insert(col.clone(), (true, true));
+                }
+                map
+            },
         }
     }
 
@@ -155,6 +167,14 @@ impl Board {
             width: 14,
             team_mode: team_mode,
             game_type,
+            can_castle: {
+                let mut map = HashMap::new();
+                let colors = [Color::White, Color::Black, Color::Red, Color::Blue];
+                for col in colors.iter() {
+                    map.insert(col.clone(), (true, true));
+                }
+                map
+            },
         }
     }
 
@@ -177,25 +197,29 @@ impl Board {
             }
         });
         if let Some(king_position) = king_position {
-            let opponents = self
-                .positions
-                .iter()
-                .filter_map(|(k, p)| {
-                    if let Some(piece) = p {
-                        Some((k, piece))
-                    } else {
-                        None
-                    }
-                })
-                .filter(|(k, p)| p.get_color().is_opponent(&color, &self.team_mode));
-            let mut cap_moves = vec![];
-            for opp in opponents {
-                cap_moves.append(&mut opp.1.get_hit_moves(self, opp.0));
-            }
-            cap_moves.iter().any(|mov| mov.to == *king_position)
+            self.is_check_position(king_position, color)
         } else {
             true
         }
+    }
+
+    pub fn is_check_position(&self, position: &Position, color: &Color) -> bool {
+        let opponents = self
+            .positions
+            .iter()
+            .filter_map(|(k, p)| {
+                if let Some(piece) = p {
+                    Some((k, piece))
+                } else {
+                    None
+                }
+            })
+            .filter(|(k, p)| p.get_color().is_opponent(&color, &self.team_mode));
+        let mut cap_moves = vec![];
+        for opp in opponents {
+            cap_moves.append(&mut opp.1.get_hit_moves(self, opp.0));
+        }
+        cap_moves.iter().any(|mov| mov.to == *position)
     }
 
     pub fn is_checkmate(&self, color: &Color) -> bool {
@@ -335,7 +359,30 @@ impl Board {
         if let Some(promotion) = &mov.promotion {
             self.positions.insert(mov.to, Some(promotion.clone()));
         } else if let Some(piece) = piece {
+            if let Some(piece) = &piece {
+                if let Piece::King(color) = piece {
+                    self.can_castle.insert(color.clone(), (false, false));
+                } else if let Piece::Rook(color) = piece {
+                    if let Some(cc) = self.can_castle.get(color) {
+                        let cc = cc.clone();
+                        if cc.0 {
+                            let rp = color.get_castle_positions().0;
+                            if mov.from == rp.1 {
+                                self.can_castle.insert(color.clone(), (false, cc.1));
+                            }
+                        } else if cc.1 {
+                            let rp = color.get_castle_positions().1;
+                            if mov.from == rp.1 {
+                                self.can_castle.insert(color.clone(), (cc.0, false));
+                            }
+                        }
+                    }
+                }
+            }
             self.positions.insert(mov.to, piece);
+        }
+        if let Some(cast) = &mov.castling {
+            self.apply_move(cast);
         }
     }
 
@@ -427,6 +474,7 @@ impl Piece {
                                             from: *position,
                                             to: np,
                                             promotion: None,
+                                            castling: None,
                                         })
                                     }
                                 }
@@ -440,6 +488,7 @@ impl Piece {
                                             from: *position,
                                             to: np,
                                             promotion: None,
+                                            castling: None,
                                         })
                                     }
                                 }
@@ -511,6 +560,7 @@ impl Piece {
                                         from: *position,
                                         to: np,
                                         promotion: None,
+                                        castling: None,
                                     })
                                 } else {
                                     break;
@@ -537,6 +587,7 @@ impl Piece {
                                         from: *position,
                                         to: np,
                                         promotion: None,
+                                        castling: None,
                                     });
                                 }
                             }
@@ -552,6 +603,7 @@ impl Piece {
                                         from: position.clone(),
                                         to: curpos,
                                         promotion: None,
+                                        castling: None,
                                     });
                                     if board.is_position_occupied(&curpos) {
                                         break;
@@ -572,6 +624,7 @@ impl Piece {
                                         from: position.clone(),
                                         to: curpos,
                                         promotion: None,
+                                        castling: None,
                                     });
                                     if board.is_position_occupied(&curpos) {
                                         break;
@@ -601,6 +654,7 @@ impl Piece {
                                         from: position.clone(),
                                         to: curpos,
                                         promotion: None,
+                                        castling: None,
                                     });
                                     if board.is_position_occupied(&curpos) {
                                         break;
@@ -610,7 +664,7 @@ impl Piece {
                                 }
                             }
                         }
-                        Piece::King(_) => {
+                        Piece::King(color) => {
                             let dirs = [
                                 (1, 0),
                                 (-1, 0),
@@ -631,7 +685,39 @@ impl Piece {
                                         from: position.clone(),
                                         to: curpos,
                                         promotion: None,
+                                        castling: None,
                                     })
+                                }
+                            }
+                            if !board.is_check(color) {
+                                if let Some(p) = board.can_castle.get(&self.get_color()) {
+                                    if p.0 {
+                                        let poss = self.get_color().get_castle_positions().0;
+                                        let cancastle = !poss.0.iter().any(|p| {
+                                            board.is_position_occupied(p)
+                                                || board.is_check_position(p, color)
+                                        });
+                                        if cancastle {
+                                            let mut np = position.clone();
+                                            np.0 += poss.0[1].0;
+                                            np.1 += poss.0[1].1;
+
+                                            let mut np2 = position.clone();
+                                            np2.0 += poss.0[0].0;
+                                            np2.1 += poss.0[0].1;
+                                            moves.push(Move {
+                                                from: position.clone(),
+                                                to: np,
+                                                promotion: None,
+                                                castling: Some(Box::new(Move {
+                                                    from: poss.1,
+                                                    to: np2,
+                                                    promotion: None,
+                                                    castling: None,
+                                                })),
+                                            })
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -649,7 +735,7 @@ impl Piece {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Serialize, Deserialize, Hash)]
 pub enum Color {
     White,
     Black,
@@ -678,6 +764,27 @@ impl Color {
             Color::Red => (0, -1),
             Color::Blue => (0, 1),
             Color::Gray(c) => c.get_pawn_direction(),
+        }
+    }
+    pub fn get_castle_positions(&self) -> ((Vec<Position>, Position), (Vec<Position>, Position)) {
+        match self {
+            Color::White => (
+                (vec![(0, -1), (0, -2)], (0, -3)),
+                (vec![(0, 1), (0, 2), (0, 3)], (0, 4)),
+            ),
+            Color::Black => (
+                (vec![(0, -1), (0, -2)], (0, -3)),
+                (vec![(0, 1), (0, 2), (0, 3)], (0, 4)),
+            ),
+            Color::Red => (
+                (vec![(-1, 0), (-2, 0)], (-3, 0)),
+                (vec![(1, 0), (3, 0), (3, 0)], (4, 0)),
+            ),
+            Color::Blue => (
+                (vec![(-1, 0), (-2, 0)], (-3, 0)),
+                (vec![(1, 0), (3, 0), (3, 0)], (4, 0)),
+            ),
+            Color::Gray(c) => c.get_castle_positions(),
         }
     }
     pub fn pawn_start(&self, board: &Board) -> Position {

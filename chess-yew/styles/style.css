@@ -85,11 +85,11 @@
 }
 
 .piece-red {
-    fill: rgb(201, 34, 34);
+    fill: rgb(240, 29, 29);
 }
 
 .piece-blue {
-    fill: rgb(0, 0, 184);
+    fill: rgb(0, 0, 255);
 }
 
 .piece-gray {
