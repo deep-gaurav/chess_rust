@@ -494,13 +494,41 @@ impl Piece {
                                 }
                             }
                         }
-                        Piece::Knight(_)
-                        | Piece::Bishop(_)
-                        | Piece::Rook(_)
-                        | Piece::Queen(_)
-                        | Piece::King(_) => {
+                        Piece::Knight(_) | Piece::Bishop(_) | Piece::Rook(_) | Piece::Queen(_) => {
                             let move_moves = self.get_moveable_moves(board, position);
                             let capturable_moves = move_moves.into_iter().filter(|mov| {
+                                board.is_position_capturable(&mov.to, &self.get_color())
+                            });
+                            moves.append(&mut capturable_moves.collect());
+                        }
+                        Piece::King(_) => {
+                            let mut mvv = vec![];
+                            let dirs = [
+                                (1, 0),
+                                (-1, 0),
+                                (0, -1),
+                                (0, 1),
+                                (1, 1),
+                                (-1, -1),
+                                (1, -1),
+                                (-1, 1),
+                            ];
+
+                            for dir in dirs.iter() {
+                                let mut curpos = position.clone();
+                                curpos.0 += dir.0;
+                                curpos.1 += dir.1;
+                                if board.is_position_moveable(&curpos, &self.get_color()) {
+                                    mvv.push(Move {
+                                        from: position.clone(),
+                                        to: curpos,
+                                        promotion: None,
+                                        castling: None,
+                                    })
+                                }
+                            }
+
+                            let capturable_moves = mvv.into_iter().filter(|mov| {
                                 board.is_position_capturable(&mov.to, &self.get_color())
                             });
                             moves.append(&mut capturable_moves.collect());
@@ -718,7 +746,7 @@ impl Piece {
                                             })
                                         }
                                     }
-if p.1 {
+                                    if p.1 {
                                         let poss = self.get_color().get_castle_positions().1;
                                         let cancastle = !poss.0.iter().any(|p| {
                                             board.is_position_occupied(p)

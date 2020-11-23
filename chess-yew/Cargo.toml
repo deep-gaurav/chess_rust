@@ -17,6 +17,7 @@ wasm-bindgen = { version = "0.2" }
 js-sys = "0.3.42"
 yew-router = "0.14"
 lazy_static = "1.4"
+console_error_panic_hook = "0.1.6"
 
 
 [dependencies.web-sys]

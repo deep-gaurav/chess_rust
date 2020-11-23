@@ -89,6 +89,7 @@ version = "0.1.0"
 dependencies = [
  "bincode",
  "chess-rust",
+ "console_error_panic_hook",
  "js-sys",
  "lazy_static",
  "log",

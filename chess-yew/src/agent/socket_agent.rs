@@ -148,9 +148,7 @@ impl SocketAgent {
         let linkclone = self.link.clone();
 
         let onerror_callback = Closure::wrap(Box::new(move |_| {
-            for subs in subscribers.clone() {
-                linkclone.clone().send_message(Msg::ErrorConnecting);
-            }
+            linkclone.clone().send_message(Msg::ErrorConnecting);
         }) as Box<dyn FnMut(JsValue)>);
 
         let ws = WebSocket::new(&format!("{}", url));
